@@ -1,14 +1,16 @@
 import { ProductCategoryName, ProductCategoryNames } from "../models/Constants";
 import { ProductCategory } from "../models/ProductCategory";
-import { DataService } from "../services/data.service";
+import { DataService } from "../services/base.data.service";
+import { CompareRangeDataService } from "../services/compare-range-data.service";
+import { BaseManager } from "./base.manager";
 
-export class CompareRangeManager {
+export class CompareRangeManager implements BaseManager {
   
   compareRangeData: ProductCategory[] = [];
-  private readonly _dataService: DataService;
+  readonly _dataService: DataService;
 
   constructor() {
-    this._dataService = new DataService();
+    this._dataService = new CompareRangeDataService();
   }
   /**
    * Generates data for compare-range.json
@@ -19,7 +21,7 @@ export class CompareRangeManager {
    */
   async generateCompareRangeJSON(): Promise<ProductCategory[]> {
     console.log("Gathering data to generate compare-range.json");
-    const { Products, ProductPicker } = await this._dataService.fetchCompareRangeData();
+    const { Products, ProductPicker } = await this._dataService.fetchData();
     console.log("Generating compare-range.json from milk_product_picker.json and products.json");
     this.compareRangeData = ProductCategoryNames.map( (name: ProductCategoryName) => {
       const productCategory = new ProductCategory(name);
