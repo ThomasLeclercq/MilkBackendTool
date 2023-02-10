@@ -1,11 +1,10 @@
-import { ProductCategoryHelper } from "../helpers/category.helper";
-import { PriceHelper } from "../helpers/price.helper";
+import { PriceHelper, ProductCategoryHelper } from "../helpers";
+import { CategoryOption } from "./CategoryOption";
 import { CategoryOptions, ProductCategoryName } from "./Constants";
 import { Currency, OptionGroupName, Orientation, ProductNameAlias, Size } from "./Enums";
 import { Price } from "./Price";
 import { Product } from "./Product";
 import { ProductPicker } from "./ProductPicker";
-import { CategoryOption } from "./CategoryOption";
 
 /**
  * Main Object of compare-range.json data

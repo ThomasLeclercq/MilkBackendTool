@@ -1,7 +1,5 @@
-import { ProductCategoryName, ProductCategoryNames } from "../models/Constants";
-import { ProductCategory } from "../models/ProductCategory";
-import { DataService } from "../services/base.data.service";
-import { CompareRangeDataService } from "../services/compare-range-data.service";
+import { ProductCategory, ProductCategoryName, ProductCategoryNames } from "../models";
+import { CompareRangeDataService, DataService } from "../services";
 import { BaseManager } from "./base.manager";
 
 export class CompareRangeManager implements BaseManager {

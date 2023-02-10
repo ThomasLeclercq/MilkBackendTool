@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config()
 
-import { AwsProvider, SqlProvider, HttpsProvider } from '../providers/index';
+import { AwsProvider, HttpsProvider } from '../providers/index';
 
 export interface DataService {
   fetchData(...params: any): Promise<any>;

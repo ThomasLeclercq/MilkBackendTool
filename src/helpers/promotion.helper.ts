@@ -1,4 +1,4 @@
-import { Promotion, PromotionName, PromotionNames } from "../models/Promotion";
+import { Promotion, PromotionName, PromotionNames } from "../models";
 
 /** 
  * Used to browse and filer Promotions from promotion_discounts.json on Hawk data.

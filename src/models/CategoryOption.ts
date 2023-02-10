@@ -1,6 +1,5 @@
 
-import { ProductCategoryHelper } from "../helpers/category.helper";
-import { PriceHelper } from "../helpers/price.helper";
+import { PriceHelper, ProductCategoryHelper } from "../helpers";
 import { CategoryOptionLabel, CategoryOptionName, ProductCategoryName } from "./Constants";
 import { Currency, Orientation, OrientationAlias, ProductNameAlias, SectionNameAlias, Size, SizeAlias } from "./Enums";
 import { Price } from "./Price";

@@ -1,4 +1,4 @@
-import { DataService } from "../services/base.data.service";
+import { DataService } from "../services";
 
 export interface BaseManager {
   readonly _dataService: DataService;

@@ -1,5 +1,4 @@
-import { OptionGroupName } from "../models/Enums";
-import { Addon, Product } from "../models/Product";
+import { Addon, OptionGroupName, Product } from "../models";
 
 /**
  * Helper that provides Price information about a Product or AddOns

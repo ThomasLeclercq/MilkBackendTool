@@ -1,8 +1,4 @@
-
-import { ProductCategoryName } from "../models/Constants";
-import { Orientation, Size } from "../models/Enums";
-import { Product } from "../models/Product";
-import { ProductPicker } from "../models/ProductPicker";
+import { Orientation, Product, ProductCategoryName, ProductPicker, Size } from "../models";
 import { SizeHelper } from "./size.helper";
 
 /**

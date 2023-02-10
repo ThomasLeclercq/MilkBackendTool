@@ -1,4 +1,4 @@
-import { Orientation, Size } from "../models/Enums";
+import { Orientation, Size } from "../models";
 /**
  * Helper that provides information about a Product sizes
  */

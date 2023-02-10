@@ -1,8 +1,8 @@
 // Fetch S3 object
 // Update S3 object
 
-import { S3, AWSError } from "aws-sdk";
-import { FileHelper } from "../helpers/index";
+import { AWSError, S3 } from "aws-sdk";
+import { FileHelper } from "../helpers";
 
 export class AwsProvider {
   private S3: S3;
