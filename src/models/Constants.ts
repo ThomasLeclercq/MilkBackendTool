@@ -1,5 +1,8 @@
 import { OptionGroupName } from "./Enums";
 
+export type Culture = "en" | "de" | "fr" | "es" | "it" | "pt";
+export type Region = "en-US" | "fr-FR" | "de-DE" | "it-IT" | "es-ES" | "pt-BR";
+
 export type ProductCategoryName = 
 'Premium Photo Books' | 'Classic Photo Books' | 
 'Premium Photo Albums' | 'Classic Photo Albums' | 'Leather Photo Albums' | 
@@ -30,3 +33,5 @@ export const CategoryOptions: CategoryOptionLabel[] = [
 ]
 
 export type ProductCategoryAlias = "MILKO-PB" | "MILKO-PA" | "MILKA-PB" | "MILKA-PA" | "MAG" | "SC" | "MSK";
+
+export interface Dictionary { [key:string]: string }

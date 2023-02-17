@@ -12,12 +12,12 @@ export interface DataService {
  * Service responsible of retrieving online data from Milkbooks
  */
 export abstract class BaseDataService {
-  protected readonly _https: HttpsProvider;
-  protected readonly _aws: AwsProvider;
-  protected readonly _forceRefresh: boolean = false;
+  protected _https: HttpsProvider;
+  protected _aws: AwsProvider;
+  protected _forceRefresh: boolean = false;
 
   constructor() {
-    this._https = new HttpsProvider(process.env.MILKAPIKEY);
+    this._https = new HttpsProvider();
     this._aws = new AwsProvider(process.env.AWSREGION);
     this._forceRefresh = (process.env.FORCE_REFRESH && process.env.FORCE_REFRESH === "true") || true;
   }

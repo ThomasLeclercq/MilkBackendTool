@@ -6,3 +6,4 @@ export * from './Price';
 export * from './Product';
 export * from './ProductPicker'; 
 export * from "./Promotion";
+export * from "./Category";

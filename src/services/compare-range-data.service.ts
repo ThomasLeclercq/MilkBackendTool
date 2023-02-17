@@ -1,6 +1,7 @@
 import * as async from 'async';
 import { FileHelper } from "../helpers";
 import { Currency, Product, ProductPicker } from "../models";
+import { MilkApiProvider } from '../providers/milk-api.provider';
 import { BaseDataService, DataService } from "./base.data.service";
 
 export class CompareRangeDataService extends BaseDataService implements DataService {
@@ -8,7 +9,8 @@ export class CompareRangeDataService extends BaseDataService implements DataServ
   private _productPicker: ProductPicker[] = [];
   
   constructor() {
-    super()
+    super();
+    this._https = new MilkApiProvider(process.env.MILKAPIKEY);
   }
 
     /**
