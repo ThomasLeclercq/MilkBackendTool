@@ -7,3 +7,4 @@ export * from './Product';
 export * from './ProductPicker'; 
 export * from "./Promotion";
 export * from "./Category";
+export * from "./Theme";

@@ -6,15 +6,17 @@ import { Dictionary } from '../models/index';
  */
 export abstract class FileHelper {
 
-  static getFile(filename: string): any { 
-    const path = `${process.cwd()}/data/${filename}`;
+  static getFile(filename: string, directories: string[] = ["data"]): any { 
+    directories = ["data", ...directories];
+    const path = `${process.cwd()}/${directories.join("/")}/${filename}`;
     const str: string = fs.readFileSync(path, { encoding: 'utf-8' });
     return JSON.parse(str);
   }
 
-  static storeFile(data: any, fileName: string): void {
-    const path = `${process.cwd()}/data/`;
-    this.createFolder(path);
+  static storeFile(data: any, fileName: string, directories: string[] = ["data"]): void {
+    directories = ["data", ...directories];
+    const path = `${process.cwd()}/${directories.join('/')}/`;
+    this.createFolders(directories);
     fs.writeFileSync(path + fileName, JSON.stringify(data))
   }
 
@@ -36,6 +38,13 @@ export abstract class FileHelper {
 
   static stringToBuffer(str: string): Buffer {
     return Buffer.from(str);
+  }
+  static createFolders(folders: string[]): void {
+    let toCreate = `${process.cwd()}/`;
+    folders.forEach( (folder: string) => {
+      toCreate += folder + "/";
+      this.createFolder(toCreate);
+    })
   }
 
   static createFolder(folderPath: string): void {
