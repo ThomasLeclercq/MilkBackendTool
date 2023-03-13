@@ -1,18 +1,18 @@
 // Fetch S3 object
 // Update S3 object
 
-import { AWSError, S3 } from "aws-sdk";
-import { FileHelper } from "../helpers";
-import zlib from "zlib";
+import { AWSError, DynamoDB, S3 } from "aws-sdk";
 
 export class AwsProvider {
   private S3: S3;
+  private Dynamo: DynamoDB;
 
   constructor(region: string) {
     if (!region || region === "") {
       throw new Error("S3 region is missing, please provide AWSREGION in .env file");
     } 
     this.S3 = new S3({ region });
+    this.Dynamo = new DynamoDB({ region });
   }
   async listS3Objects(params: S3.ListObjectsV2Request): Promise<S3.ObjectList> {
     return new Promise( (resolve, reject) => {
@@ -32,15 +32,13 @@ export class AwsProvider {
     });
   }
 
-  async getS3Object(params: S3.GetObjectRequest): Promise<any> {
+  async getS3Object(params: S3.GetObjectRequest): Promise<S3.Body> {
     return new Promise( (resolve, reject) => {
       this.S3.getObject(params, (err: AWSError, data: S3.GetObjectOutput) => {
         if (err) {
           reject(err);
         } else {
-          const buffer = zlib.gunzipSync(data.Body as Buffer);
-          const str = FileHelper.bufferToString(buffer);
-          resolve( JSON.parse(str) );
+          resolve(data.Body);
         }
       })
     });
@@ -56,6 +54,23 @@ export class AwsProvider {
         }
       })
     });
+  }
+
+  async dynamoQuery(params: DynamoDB.QueryInput): Promise<DynamoDB.ItemList> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        this.Dynamo.query(params, (err, data: DynamoDB.QueryOutput) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data.Items);
+          }
+        });
+
+      } catch(e) {
+        reject(e);
+      }
+    })
   }
 
 }

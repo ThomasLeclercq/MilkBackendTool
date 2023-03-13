@@ -1,4 +1,5 @@
 import fs from 'fs';
+import zlib from "zlib";
 import { Dictionary } from '../models/index';
 
 /**
@@ -18,6 +19,17 @@ export abstract class FileHelper {
     const path = `${process.cwd()}/${directories.join('/')}/`;
     this.createFolders(directories);
     fs.writeFileSync(path + fileName, JSON.stringify(data))
+  }
+
+  static storeImageFile(data: Buffer, fileName: string, directories: string[] = ["data"]): void {
+    directories = ["data", ...directories];
+    const path = `${process.cwd()}/${directories.join('/')}/`;
+    this.createFolders(directories);
+    fs.writeFileSync(path + fileName, data);
+  }
+
+  static unzipFile(data: Buffer): Buffer {
+    return zlib.gunzipSync(data);
   }
 
   static storeCSVFile(data: any, fileName: string): void {

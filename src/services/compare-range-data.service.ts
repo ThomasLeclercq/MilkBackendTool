@@ -94,10 +94,11 @@ export class CompareRangeDataService extends BaseDataService implements DataServ
           if (!process.env.S3_MILK_PRODUCT_PICKER_PATH || process.env.S3_MILK_PRODUCT_PICKER_PATH === "") {
             throw new Error("Missing milk_product_picker.json path, please provide S3_MILK_PRODUCT_PICKER_PATH in .env");
           }
-          const s3Data = await this._aws.getS3Object({
+          const s3DataBuffer = await this._aws.getS3Object({
             Key: process.env.S3_MILK_PRODUCT_PICKER_PATH,
             Bucket: process.env.BUCKET
-          });
+          }) as Buffer;
+          const s3Data = JSON.parse( FileHelper.bufferToString(s3DataBuffer) );
           console.log("Fetching MilkProductPicker data")
           this._productPicker = s3Data.map( x => new ProductPicker(x));
           resolve(this._productPicker);

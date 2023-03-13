@@ -80,7 +80,9 @@ export class CloudtrailEventDataService extends BaseDataService {
       try {
         const logs = [];
         async.eachLimit(keys, 10, async (key: string) => {
-          const log = await this._aws.getS3Object({ Bucket: this.cloudtrailLogsBucket, Key: key }) as CloudTrailLog;
+          const logGZIPBuffer = await this._aws.getS3Object({ Bucket: this.cloudtrailLogsBucket, Key: key });
+          const logBuffer = FileHelper.unzipFile(logGZIPBuffer as Buffer);
+          const log = JSON.parse( logBuffer.toString("utf-8") );
           log.Name = key;
           logs.push(log);
           console.log("Progress - %s on %s - (%s%)", logs.length, keys.length, ((logs.length/keys.length)*100).toFixed(2));

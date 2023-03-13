@@ -52,7 +52,8 @@ export class ThemeDataService extends BaseDataService implements DataService {
           if (!process.env.BUCKET || process.env.BUCKET == "") {
             throw new Error("Missing BUCKET in .env file");
           }
-          theme = await this._aws.getS3Object({ Key: `data/theme/gzip/${themeName}`, Bucket: process.env.BUCKET });
+          const themeBuffer = await this._aws.getS3Object({ Key: `data/theme/gzip/${themeName}`, Bucket: process.env.BUCKET }) as Buffer;
+          theme = JSON.parse( FileHelper.bufferToString(themeBuffer) )
           FileHelper.storeFile(theme, themeName);
         } else {
           theme = FileHelper.getFile(themeName);
