@@ -8,3 +8,4 @@ export * from './ProductPicker';
 export * from "./Promotion";
 export * from "./Category";
 export * from "./Theme";
+export * from "./Tasks";

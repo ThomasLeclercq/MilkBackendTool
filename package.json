@@ -12,9 +12,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.369.0",
+    "@aws-sdk/client-s3": "^3.363.0",
     "@google-cloud/translate": "^7.1.0",
+    "@types/prompts": "^2.4.4",
     "async": "^3.2.4",
     "aws-sdk": "^2.1270.0",
+    "prompts": "^2.4.2",
     "tedious": "^15.1.2",
     "zlib": "^1.0.5"
   },
