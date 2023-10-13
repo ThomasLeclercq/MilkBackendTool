@@ -1,10 +1,11 @@
 import { OptionGroupName } from "./Enums";
 
-export type ProductTypeAlias = BookTypeAlias | AlbumTypeAlias | SoftCoverTypeAlias | MagazineTypeAlias | MoleskineTypeAlias | PresentationBoxTypeAlias;
+export type ProductTypeAlias = BookTypeAlias | AlbumTypeAlias | SoftCoverTypeAlias | MagazineTypeAlias | GuestBookTypeAlias | MoleskineTypeAlias | PresentationBoxTypeAlias;
 export type BookTypeAlias = "MILKA-MSPB" | "MILKA-MLPB" | "MILKA-MPPB" | "MILKA-LSPB" | "MILKA-LLPB" | "MILKA-LPPB" | "MILKO-SLPB" | "MILKO-MLPB" | "MILKO-LLPB";
 export type AlbumTypeAlias = "MILKA-MSPA" | "MILKA-MLPA" | "MILKA-MPPA" | "MILKA-LSPA" | "MILKA-LLPA" | "MILKA-LPPA" | "MILKO-MLPA" | "MILKO-LLPA";
 export type SoftCoverTypeAlias = "MSSC" | "MLSC" | "MPSC";
 export type MagazineTypeAlias = "WM";
+export type GuestBookTypeAlias = "GB";
 export type MoleskineTypeAlias = "MSKCP" | "MSKMS" | "MSKML" | "MSKLM" | "MSKCL";
 export type PresentationBoxTypeAlias = "MSPB" | "MPPB" | "MLPB" | "LSPB" | "LPPB" | "LLPB" | "LLPBO" | "MLPBO" | "LLB"
 
@@ -43,6 +44,8 @@ export const ThemeMap: ThemeMapType[] = [
   { Alias: "LLPB", Filename: "24.json" },
   { Alias: "LLPBO", Filename: "25.json" },
   { Alias: "MLPBO", Filename: "62.json" },
+  { Alias: "WM", Filename: "71.json" },
+  { Alias: "GB", Filename: "72.json" },
 ]
 
 export type ThemeSectionName = "Cover" | "Pages" | "PresentationBox" | "Jacket";

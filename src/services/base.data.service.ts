@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config()
 
-import { AwsProvider, HttpsProvider } from '../providers/index';
+import { AwsProvider, HttpsProvider, SqlProvider } from '../providers/index';
 
 export interface DataService {
   fetchData(...params: any): Promise<any>;
@@ -14,12 +14,14 @@ export interface DataService {
 export abstract class BaseDataService {
   protected _https: HttpsProvider;
   protected _aws: AwsProvider;
+  public _sql: SqlProvider;
   protected _forceRefresh: boolean = false;
 
   constructor() {
     this._https = new HttpsProvider();
-    this._aws = new AwsProvider(process.env.AWSREGION);
-    this._forceRefresh = (process.env.FORCE_REFRESH && process.env.FORCE_REFRESH === "true") || true;
+    this._sql = new SqlProvider(process.env.SQL_SERVER, process.env.SQL_DATABASE, process.env.SQL_USERNAME, process.env.SQL_PASSWORD);
+    this._aws = new AwsProvider(process.env.AWSREGION, process.env.S3_REGION, process.env.DYNAMO_REGION, process.env.LAMBDA_REGION);
+    this._forceRefresh = (process.env.FORCE_REFRESH && process.env.FORCE_REFRESH === "true") || false;
   }
 
 }

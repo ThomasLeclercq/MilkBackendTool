@@ -10,8 +10,12 @@ export abstract class FileHelper {
   static getFile(filename: string, directories: string[] = ["data"]): any { 
     directories = ["data", ...directories];
     const path = `${process.cwd()}/${directories.join("/")}/${filename}`;
-    const str: string = fs.readFileSync(path, { encoding: 'utf-8' });
-    return JSON.parse(str);
+    if (fs.existsSync(path)) {
+      const str: string = fs.readFileSync(path, { encoding: 'utf-8' });
+      return JSON.parse(str);
+    } else {
+      return;
+    }
   }
 
   static storeFile(data: any, fileName: string, directories: string[] = ["data"]): void {

@@ -1,35 +1,46 @@
 // Fetch S3 object
 // Update S3 object
 
-import { AWSError, DynamoDB, S3, IAM } from "aws-sdk";
-import { GetObjectCommand, GetObjectCommandInput, GetObjectCommandOutput, PutObjectCommand, PutObjectCommandInput, PutObjectCommandOutput, S3Client } from "@aws-sdk/client-s3";
 import {
+  BatchGetItemCommand, BatchGetItemCommandInput, BatchGetItemCommandOutput,
   BatchWriteItemCommand, BatchWriteItemCommandInput, BatchWriteItemCommandOutput,
   DeleteItemCommand, DeleteItemCommandInput, DeleteItemCommandOutput,
   DynamoDBClient,
+  GetItemCommand, GetItemCommandInput, GetItemCommandOutput,
   PutItemCommand, PutItemCommandInput, PutItemCommandOutput,
   QueryCommand, QueryCommandInput, QueryCommandOutput, ScanCommand,
-  ScanCommandOutput,
-  BatchGetItemCommand, BatchGetItemCommandInput, BatchGetItemCommandOutput,
-  GetItemCommand, GetItemCommandInput, GetItemCommandOutput
+  ScanCommandOutput
 } from "@aws-sdk/client-dynamodb";
+import {
+  InvokeCommand, InvokeCommandInput, InvokeCommandOutput,
+  LambdaClient,
+} from "@aws-sdk/client-lambda";
+import {
+  DeleteObjectsCommand, DeleteObjectsCommandInput, DeleteObjectsCommandOutput,
+  GetObjectCommand, GetObjectCommandInput, GetObjectCommandOutput,
+  PutObjectCommand, PutObjectCommandInput, PutObjectCommandOutput,
+  S3Client
+} from "@aws-sdk/client-s3";
+import { AWSError, DynamoDB, IAM, S3 } from "aws-sdk";
 
 export class AwsProvider {
   public S3Provider: S3Provider;
   public DynamoDBProvider: DynamoDBProvider;
+  public LambdaProvider: LambdaProvider;
   private S3: S3;
   private Dynamo: DynamoDB;
   private Iam: IAM;
 
-  constructor(region: string) {
-    if (!region || region === "") {
+  constructor(awsRegion: string, s3Region: string, dynamoRegion: string, lambdaRegion: string) {
+    if (!s3Region || s3Region === "") {
       throw new Error("S3 region is missing, please provide AWSREGION in .env file");
     } 
-    this.S3 = new S3({ region });
-    this.Dynamo = new DynamoDB({region});
-    this.S3Provider = new S3Provider(region);
-    this.DynamoDBProvider = new DynamoDBProvider(region);
-    this.Iam = new IAM({ region });
+    this.S3 = new S3({ region: s3Region });
+    this.Dynamo = new DynamoDB({region: dynamoRegion});
+    this.S3Provider = new S3Provider(s3Region);
+    this.DynamoDBProvider = new DynamoDBProvider(dynamoRegion);
+    this.Iam = new IAM({ region: awsRegion });
+    this.LambdaProvider = new LambdaProvider(lambdaRegion);
   }
   async listS3Objects(params: S3.ListObjectsV2Request): Promise<S3.ObjectList> {
     return new Promise( (resolve, reject) => {
@@ -194,107 +205,147 @@ class S3Provider {
       }
     });
   }
+
+  async deleteMultipleS3Objects(input: DeleteObjectsCommandInput): Promise<DeleteObjectsCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new DeleteObjectsCommand(input);
+        const output = await this.client.send(command);
+        if (output.Errors && output.Errors.length > 0) {
+          console.error(output.Errors);
+          throw "Err while deleting multiple objects";
+        } else {
+          resolve(output);
+        }
+      } catch(err) {
+        console.error("S3Provider.DeleteMultipleS3Objects ==> ", err);
+        reject(err);
+      }
+    })
+  }
 }
 
-  class DynamoDBProvider {
-    readonly client: DynamoDBClient;
-  
-    constructor(region: string) {
-      this.client = new DynamoDBClient({ region }); 
-    }
-  
-    async count(tableName: string): Promise<number> {
-      return new Promise(async (resolve, reject) => {
-        try {
-          const command = new ScanCommand({
-            TableName: tableName,
-            Select: "COUNT"
-          });
-          const output: ScanCommandOutput = await this.client.send(command);
-          resolve(output.Count || 0);
-        } catch (error) {
-          console.error(error);
-          reject(error);
-        }
-      });
-    }
-  
-    async query(input: QueryCommandInput): Promise<QueryCommandOutput> {
-      return new Promise( async (resolve, reject) => {
-        try {
-          const command = new QueryCommand(input);
-          const result = await this.client.send(command);
-          resolve(result);
-        } catch (error) {
-          console.error(error);
-          reject(error);
-        }
-      });
-    }
-  
-    async batchWriteItems(input: BatchWriteItemCommandInput): Promise<BatchWriteItemCommandOutput> {
-      return new Promise( async (resolve, reject) => {
-        try {
-          const command = new BatchWriteItemCommand(input);
-          const output: BatchWriteItemCommandOutput = await this.client.send(command);
-          resolve(output);
-        } catch (error) {
-          console.error(error);
-          reject(error);
-        }
-      });
-    }
+class DynamoDBProvider {
+  readonly client: DynamoDBClient;
 
-    async batchGetItems(input: BatchGetItemCommandInput): Promise<BatchGetItemCommandOutput> {
-      return new Promise( async (resolve, reject) => {
-        try {
-          const command = new BatchGetItemCommand(input);
-          const output: BatchGetItemCommandOutput = await this.client.send(command);
-          resolve(output);
-        } catch (error) {
-          console.error(error);
-          reject(error);
-        }
-      });
-    }
-  
-    async putItem(input: PutItemCommandInput): Promise<PutItemCommandOutput> {
-      return new Promise( async (resolve, reject) => {
-        try {
-          const command = new PutItemCommand(input);
-          const output = await this.client.send(command);
-          resolve(output);
-        } catch (error) {
-          console.error(error);
-          reject(error);
-        }
-      });
-    }
-
-    async getItem(input: GetItemCommandInput): Promise<GetItemCommandOutput> {
-      return new Promise( async (resolve, reject) => {
-        try {
-          const command = new GetItemCommand(input);
-          const output = await this.client.send(command);
-          resolve(output);
-        } catch (error) {
-          console.error(error);
-          reject(error);
-        }
-      });
-    }
-  
-    async deleteItem(query: DeleteItemCommandInput): Promise<DeleteItemCommandOutput> {
-      return new Promise( async (resolve, reject) => {
-        try {
-          const command = new DeleteItemCommand(query);
-          const output = await this.client.send(command);
-          resolve(output);
-        } catch (error) {
-          console.error(error);
-          reject(error);
-        }
-      });
-    }
-  
+  constructor(region: string) {
+    this.client = new DynamoDBClient({ region }); 
   }
+
+  async count(tableName: string): Promise<number> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const command = new ScanCommand({
+          TableName: tableName,
+          Select: "COUNT"
+        });
+        const output: ScanCommandOutput = await this.client.send(command);
+        resolve(output.Count || 0);
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      }
+    });
+  }
+
+  async query(input: QueryCommandInput): Promise<QueryCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new QueryCommand(input);
+        const result = await this.client.send(command);
+        resolve(result);
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      }
+    });
+  }
+
+  async batchWriteItems(input: BatchWriteItemCommandInput): Promise<BatchWriteItemCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new BatchWriteItemCommand(input);
+        const output: BatchWriteItemCommandOutput = await this.client.send(command);
+        resolve(output);
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      }
+    });
+  }
+
+  async batchGetItems(input: BatchGetItemCommandInput): Promise<BatchGetItemCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new BatchGetItemCommand(input);
+        const output: BatchGetItemCommandOutput = await this.client.send(command);
+        resolve(output);
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      }
+    });
+  }
+
+  async putItem(input: PutItemCommandInput): Promise<PutItemCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new PutItemCommand(input);
+        const output = await this.client.send(command);
+        resolve(output);
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      }
+    });
+  }
+
+  async getItem(input: GetItemCommandInput): Promise<GetItemCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new GetItemCommand(input);
+        const output = await this.client.send(command);
+        resolve(output);
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      }
+    });
+  }
+
+  async deleteItem(query: DeleteItemCommandInput): Promise<DeleteItemCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new DeleteItemCommand(query);
+        const output = await this.client.send(command);
+        resolve(output);
+      } catch (error) {
+        console.error(error);
+        reject(error);
+      }
+    });
+  }
+
+}
+
+class LambdaProvider {
+  readonly client: LambdaClient;
+  constructor(region: string) {
+    if (!region || region === '') {
+      throw new Error("AWS_REGION is missing");
+    }
+    this.client = new LambdaClient({ region });
+  }
+
+  async invoke(input: InvokeCommandInput): Promise<InvokeCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new InvokeCommand(input);
+        const output = await this.client.send(command);
+        resolve(output);
+      } catch(err) {
+        reject(err);
+      }
+    });
+  }
+}

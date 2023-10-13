@@ -9,7 +9,7 @@ export class TransferUserProjectTask extends BaseTask {
 
   constructor() {
     super("Transfer User project", "TransferUserProject");
-    this.aws = new AwsProvider(process.env.AWSREGION);
+    this.aws = new AwsProvider(process.env.AWSREGION, process.env.S3_REGION, process.env.DYNAMO_REGION, process.env.LAMBDA_REGION);
 
   }
 
@@ -18,7 +18,7 @@ export class TransferUserProjectTask extends BaseTask {
       const oldUserId = await this.reply("Please enter source userId:");
       const newUserId = await this.reply("Please enter destination userId:");
       const projectGuid = await this.reply("Please enter the project guid you wish to transfer:");
-      if (oldUserId && newUserId && projectGuid && oldUserId != "" && newUserId != "" && projectGuid != "") {
+      if (oldUserId && newUserId && projectGuid) {
         const projectData: GetItemCommandOutput = await this.getProjectData(projectGuid, oldUserId);
         // TODO update projectGuid with new userid
         const spreadsGuids: string[] = JSON.parse(projectData.Item["Spreads"].S);
