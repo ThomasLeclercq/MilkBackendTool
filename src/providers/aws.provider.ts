@@ -1,6 +1,3 @@
-// Fetch S3 object
-// Update S3 object
-
 import {
   BatchGetItemCommand, BatchGetItemCommandInput, BatchGetItemCommandOutput,
   BatchWriteItemCommand, BatchWriteItemCommandInput, BatchWriteItemCommandOutput,
@@ -16,20 +13,34 @@ import {
   LambdaClient,
 } from "@aws-sdk/client-lambda";
 import {
+  CopyObjectCommand,
+  CopyObjectCommandInput,
+  CopyObjectCommandOutput,
   DeleteObjectsCommand, DeleteObjectsCommandInput, DeleteObjectsCommandOutput,
   GetObjectCommand, GetObjectCommandInput, GetObjectCommandOutput,
+  ListObjectsCommand,
+  ListObjectsCommandInput,
+  ListObjectsCommandOutput,
+  ListObjectsV2Command,
+  ListObjectsV2CommandInput,
+  ListObjectsV2CommandOutput,
   PutObjectCommand, PutObjectCommandInput, PutObjectCommandOutput,
   S3Client
 } from "@aws-sdk/client-s3";
+import {
+  PublishBatchCommand, PublishBatchCommandInput, PublishBatchCommandOutput, SNSClient
+} from "@aws-sdk/client-sns";
 import { AWSError, DynamoDB, IAM, S3 } from "aws-sdk";
 
 export class AwsProvider {
   public S3Provider: S3Provider;
   public DynamoDBProvider: DynamoDBProvider;
   public LambdaProvider: LambdaProvider;
+  public SnsProvider: SNSProvider;
   private S3: S3;
   private Dynamo: DynamoDB;
   private Iam: IAM;
+
 
   constructor(awsRegion: string, s3Region: string, dynamoRegion: string, lambdaRegion: string) {
     if (!s3Region || s3Region === "") {
@@ -41,6 +52,7 @@ export class AwsProvider {
     this.DynamoDBProvider = new DynamoDBProvider(dynamoRegion);
     this.Iam = new IAM({ region: awsRegion });
     this.LambdaProvider = new LambdaProvider(lambdaRegion);
+    this.SnsProvider = new SNSProvider(awsRegion);
   }
   async listS3Objects(params: S3.ListObjectsV2Request): Promise<S3.ObjectList> {
     return new Promise( (resolve, reject) => {
@@ -151,7 +163,7 @@ export class AwsProvider {
 
 }
 
-class S3Provider {
+export class S3Provider {
   
   readonly client: S3Client;
 
@@ -176,13 +188,13 @@ class S3Provider {
     });
   }
 
-  async putS3Object(key: string, bucket: string, body: any): Promise<PutObjectCommandOutput> {
+  async putS3Object(key: string, bucket: string, body: Buffer): Promise<PutObjectCommandOutput> {
     return new Promise( async (resolve, reject) => {
       try {
         const input: PutObjectCommandInput = {
           Key: key, 
           Bucket: bucket,
-          Body: Buffer.from(JSON.stringify(body))
+          Body: body
         }
         const command = new PutObjectCommand(input);
         const output = await this.client.send(command);
@@ -223,9 +235,35 @@ class S3Provider {
       }
     })
   }
+
+  async listS3Objects(input: ListObjectsV2CommandInput): Promise<ListObjectsV2CommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new ListObjectsV2Command(input);
+        const output = this.client.send(command);
+        resolve(output);
+      } catch(err) {
+        console.error("Error listing s3 object - %s ->", input, err);
+        reject(err);
+      }
+    }); 
+  }
+
+  async copyS3Object(input: CopyObjectCommandInput): Promise<CopyObjectCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new CopyObjectCommand(input);
+        const output = this.client.send(command);
+        resolve(output);
+      } catch(err) {
+        console.error("Error copying s3 object - %s ->", input.Key, err);
+        reject(err);
+      }
+    }); 
+  }
 }
 
-class DynamoDBProvider {
+export class DynamoDBProvider {
   readonly client: DynamoDBClient;
 
   constructor(region: string) {
@@ -328,7 +366,7 @@ class DynamoDBProvider {
 
 }
 
-class LambdaProvider {
+export class LambdaProvider {
   readonly client: LambdaClient;
   constructor(region: string) {
     if (!region || region === '') {
@@ -348,4 +386,26 @@ class LambdaProvider {
       }
     });
   }
+}
+
+export class SNSProvider {
+  private readonly _client: SNSClient;
+  constructor(region: string = 'us-east-1') {
+    this._client = new SNSClient({ region });
+  }
+
+  async publishBatch(input: PublishBatchCommandInput): Promise<PublishBatchCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new PublishBatchCommand(input);
+        console.log(input);
+        const output: PublishBatchCommandOutput = await this._client.send(command);
+        resolve(output);
+      } catch(err) {
+        console.error("Error Publish Batch - %s -> ", input, err);
+        reject(err);
+      }
+    }); 
+  }
+
 }

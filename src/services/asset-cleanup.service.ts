@@ -250,8 +250,10 @@ export class AssetCleanupService extends BaseDataService {
           FunctionName: process.env.CAN_DELETE_FUNCTION_NAME,
           Payload: Buffer.from(JSON.stringify(payload), 'utf-8')
         }
-        const result = await this._aws.LambdaProvider.invoke(input);
-        const canDelete = result.Payload.transformToString('utf-8') === "true";
+        const output = await this._aws.LambdaProvider.invoke(input);
+        const response = output.Payload.transformToString('utf-8');
+        const { body } = JSON.parse(response);
+        const { canDelete } = JSON.parse(body);
         resolve(canDelete);
       } catch(err) {
         reject(err);
@@ -296,6 +298,21 @@ export class AssetCleanupService extends BaseDataService {
         reject(err);
       }
     })
+  }
+
+  private async _pollDesignStudioDeletedAssets(): Promise<Asset[]> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const messages: string[] = await this._rmq.receive('asset_filter', 100);
+        const payload: {Subject: string, Payload: any[]}[] = messages.map(x => JSON.parse(x));
+        const assets: Asset[] = payload.map(x => x.Payload).reduce( (previous, current) => {
+          return [...previous, ...current];
+        });
+        resolve(assets);
+      } catch(err) {
+        reject(err);
+      }
+    });
   }
 
 }

@@ -1,1 +1,1 @@
-export type TaskCommand = "RefreshPassOrderUrls" | "TransferUserProject";
+export type TaskCommand = "RefreshPassOrderUrls" | "TransferUserProject" | "TransferRestoredSpreads";

@@ -5,13 +5,14 @@ import { TaskCommand } from "../models/Tasks";
 import { BaseTask } from "../tasks";
 import { RefreshPassOrderUrls } from "../tasks/RefreshPassOrderUrls";
 import { TransferUserProjectTask } from "../tasks/TransferUserProject";
+import { TransferRestoredSpreads } from "../tasks/TransferRestoredSpreads";
 dotenv.config();
 
 export class Cli {
 
   readonly choices: { title: string, value: TaskCommand }[] = [];
   private readonly _cli: EventEmitter = new EventEmitter();
-  private readonly _tasks: BaseTask[] = [ new RefreshPassOrderUrls(), new TransferUserProjectTask() ];
+  private readonly _tasks: BaseTask[] = [ new RefreshPassOrderUrls(), new TransferUserProjectTask(), new TransferRestoredSpreads() ];
 
   constructor() {
     for (const task of this._tasks) {

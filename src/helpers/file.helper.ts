@@ -32,6 +32,13 @@ export abstract class FileHelper {
     fs.writeFileSync(path + fileName, data);
   }
 
+  static storeImageFileV3(data: any, fileName: string, directories: string[] = ["data"]): void {
+    directories = ["data", ...directories];
+    const path = `${process.cwd()}/${directories.join('/')}/`;
+    this.createFolders(directories);
+    fs.writeFileSync(path + fileName, data);
+  }
+
   static unzipFile(data: Buffer): Buffer {
     return zlib.gunzipSync(data);
   }
