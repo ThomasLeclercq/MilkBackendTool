@@ -25,6 +25,17 @@ export abstract class FileHelper {
     fs.writeFileSync(path + fileName, JSON.stringify(data))
   }
 
+  static updateFile(data: any, fileName: string, directories: string[] = ["data"]): void {
+    directories = ["data", ...directories];
+    const path = `${process.cwd()}/${directories.join('/')}/`;
+    if (fs.existsSync(path)) {
+      fs.appendFileSync(path + fileName, JSON.stringify(data))
+    } else {
+      this.createFolders(directories);
+      fs.writeFileSync(path + fileName, JSON.stringify(data))
+    }
+  }
+
   static storeImageFile(data: Buffer, fileName: string, directories: string[] = ["data"]): void {
     directories = ["data", ...directories];
     const path = `${process.cwd()}/${directories.join('/')}/`;
@@ -106,6 +117,12 @@ export abstract class FileHelper {
       })
     })
     return dictionary;
+  }
+
+  static readDir(directories: string[] = ["data"]): string[] {
+    directories = ["data", ...directories];
+    const path = `${process.cwd()}/${directories.join("/")}/`;
+    return fs.readdirSync(path);
   }
 
 }

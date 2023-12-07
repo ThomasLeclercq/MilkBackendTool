@@ -1,8 +1,8 @@
 import { AttributeValue } from "@aws-sdk/client-dynamodb";
+import { ListObjectsV2CommandInput } from "@aws-sdk/client-s3";
+import async from "async";
 import { ArrayHelper, FileHelper } from "../helpers";
 import { AwsProvider } from "../providers";
-import async from "async";
-import fs from "fs";
 
 interface Asset {
   ProjectGuid: string;
@@ -28,10 +28,14 @@ export class RepairHEICAssetsService {
         const heicAssetKeyList = await this._listHEICS3AssetsFromUser(userId);
         console.log("Found %s heic files for %s", heicAssetKeyList.length, userId, heicAssetKeyList);
         await this._copyUserAssets(heicAssetKeyList, userId);
-        
+        const keyNames = heicAssetKeyList.map(x => {
+          const splitted = x.split(".");
+          return splitted[splitted.length-2];
+        })
+        console.log(keyNames);
         const projects: Record<string, AttributeValue>[] = await this._fetchUserProjects(userId);
         const activeProjects = projects.filter(x => {
-          return x["ProjectStatus"] ? parseInt(x["ProjectStatus"].S) < 4 : false;
+          return x["ProjectGuid"].S === "28a5085a-f302-484f-9e78-06f959ae8cb2";
         });
         console.log("Found %s active projects for %s", activeProjects.length, userId, activeProjects.map( x => x["ProjectGuid"].S));
 
@@ -41,36 +45,44 @@ export class RepairHEICAssetsService {
           const spreadData: Record<string, AttributeValue>[] = await this._fetchProjectSpreadData(projectGuid, spreadGuids);
           console.log("Fetched %s spreads for Project %s", spreadData.length, projectGuid);
 
-          
+          const spreadsToUpdate: Record<string, AttributeValue>[] = [];
           const assetToUpdate: Record<string, AttributeValue>[] = []
-          spreadData.filter(x => x["Data"].S.match(/heic/)).forEach(x => {
+          spreadData.filter(x => x["Data"].S.match(/heic/gm)).forEach(x => {
             const projectGuid = x["ProjectGuid"].S;
             FileHelper.storeFile(JSON.parse(x["Data"].S), `OriginalSpread-${x["SpreadGuid"].S}.json`, ['heic-recovery', userId.toString(), projectGuid])
             const data = JSON.parse(x["Data"].S);
             if (data.Layout?.ImagePlaceholders) {
               data.Layout?.ImagePlaceholders.filter( imagePlaceholder => imagePlaceholder.Asset !== undefined ).forEach( imagePlaceholder => {
                 const asset = imagePlaceholder.Asset;
+                for (const originalNameHEIC of keyNames) {
+                  if (asset.OriginalFileName.includes(originalNameHEIC)) {
+                    asset.OriginalFileName = `${originalNameHEIC}.jpeg`;
+                    if (!assetToUpdate.find(x => x.AssetGuid.S === asset.Guid)) {
+                      assetToUpdate.push({ 
+                        ProjectGuid: { S: projectGuid }, 
+                        AssetGuid: { S: asset.Guid }, 
+                        Data: { S: JSON.stringify(asset) }
+                      })
+                    }
+                  }
+                }
                 FileHelper.storeFile(asset, `OriginalAsset-${asset.Guid}.json`, ['heic-recovery', userId.toString(), projectGuid])
-                assetToUpdate.push({ 
-                  ProjectGuid: { S: projectGuid }, 
-                  AssetGuid: { S: asset.Guid }, 
-                  Data: { S: JSON.stringify(asset).replace(/heic/gm, "jpg") }
-                })
               })
             }
+            spreadsToUpdate.push({ 
+              ProjectGuid: { S: projectGuid }, 
+              SpreadGuid: { S: x["SpreadGuid"].S }, 
+              Data: { S: JSON.stringify(data) }
+            })
           });
-
-          const spreadsToUpdate: Record<string, AttributeValue>[] = spreadData
-            .filter(x => x["Data"].S.match(/heic/))
-            .map(x => ({...x, "Data": { S: x["Data"].S.replace(/heic/gm, "jpg")} }) );
 
           if (assetToUpdate.length > 0) {
             console.log("Found Asset Data to Repair")
-            FileHelper.storeFile(assetToUpdate, `AssetDataToUpdate.json`, ['heic-recovery', userId.toString(), projectGuid])
+            FileHelper.storeFile(assetToUpdate, `AssetDataToUpdate2.json`, ['heic-recovery', userId.toString(), projectGuid])
           }
           if (spreadsToUpdate.length > 0) {
             console.log("Found Spread Data to Repair")
-            FileHelper.storeFile(spreadsToUpdate, `SpreadDataToUpdate.json`, ['heic-recovery', userId.toString(), projectGuid])
+            FileHelper.storeFile(spreadsToUpdate, `SpreadDataToUpdate2.json`, ['heic-recovery', userId.toString(), projectGuid])
           } 
 
           await Promise.all([
@@ -87,14 +99,52 @@ export class RepairHEICAssetsService {
     })
   }
 
-  private async _listHEICS3AssetsFromUser(userId: number): Promise<string[]> {
+  async revertRepair(projectGuid: string, userId: number): Promise<void> {
     return new Promise( async (resolve, reject) => {
       try {
-        const output = await this._aws.S3Provider.listS3Objects({
+        const originalDataFiles = FileHelper.readDir(["heic-recovery", userId.toString(), projectGuid]);
+        const assets = [];
+        const spreads = [];
+        originalDataFiles.forEach(fileName => {
+          if (fileName.includes("OriginalSpread")) {
+            let spreadData = FileHelper.getFile(fileName, ["heic-recovery", userId.toString(), projectGuid])
+            const spread = { "ProjectGuid": { S: projectGuid }, "SpreadGuid": {S: spreadData.Guid }, "Data": {S: JSON.stringify(spreadData)} };
+            spreads.push(spread);
+          }
+          if (fileName.includes("OriginalAsset")) {
+            let assetData = FileHelper.getFile(fileName, ["heic-recovery", userId.toString(), projectGuid])
+            const asset = { "ProjectGuid": { S: projectGuid }, "AssetGuid": {S: assetData.Guid }, "Data": {S: JSON.stringify(assetData)} };
+            assets.push(asset);
+          }
+        })
+        await Promise.all([
+          this._updateAssetData(projectGuid, assets),
+          this._updateProjectSpreadData(projectGuid, spreads),
+        ]);
+        resolve();
+      } catch(err) {
+        reject(err);
+      }
+    })
+  }
+
+  private async _listHEICS3AssetsFromUser(userId: number, HEICKeys: string[] = [], ContinuationToken: string = undefined): Promise<string[]> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const input: ListObjectsV2CommandInput = {
           Bucket: 'milkbooks-design',
-          Prefix: `library/${userId}/11.2023/original/`
-        });
-        const HEICKeys: string[] = output.Contents.filter( x => x.Key.includes('.heic')).map(x => x.Key);
+          Prefix: `library/${userId}/11.2023/original/`, 
+        }
+        if (ContinuationToken) {
+          input.ContinuationToken = ContinuationToken;
+        }
+        const output = await this._aws.S3Provider.listS3Objects(input);
+        HEICKeys = [...HEICKeys, ...output.Contents.filter( x => x.Key.includes('.heic')).map(x => x.Key)];
+        console.log("Fetched %s keys", HEICKeys.length);
+        if (output.NextContinuationToken !== undefined) {
+          console.log("Continuing...");
+          HEICKeys = await this._listHEICS3AssetsFromUser(userId, HEICKeys, output.NextContinuationToken);
+        }
         resolve(HEICKeys)
       } catch(err) {
         console.error("Error listing HEIC files for user %s", userId);
@@ -102,6 +152,7 @@ export class RepairHEICAssetsService {
       }
     });
   }
+
   private async _copyUserAssets(heicAssetKeyList: string[], userId: number): Promise<void> {
     return new Promise( async (resolve, reject) => {
       async.eachLimit(heicAssetKeyList, 10, async (heicKey: string) => {
@@ -119,8 +170,8 @@ export class RepairHEICAssetsService {
 
   private async _copyHEICToJPEG(key: string): Promise<void> {
     return new Promise( async (resolve, reject) => {
-      for( const assetType of ["small", "thumbnail"] ) {  
-        const CopySource = key.replace("original", assetType);
+      for( const assetType of ["thumbnail", "small"] ) {  
+        const CopySource = key.replace("original", assetType)
         const Key = CopySource.replace("heic", "jpg");
         console.log("Will copy %s to %s", CopySource, Key);
         try {
@@ -221,6 +272,5 @@ export class RepairHEICAssetsService {
       }
     });
   }
-
 
 }

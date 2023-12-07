@@ -18,9 +18,9 @@ import {
   CopyObjectCommandOutput,
   DeleteObjectsCommand, DeleteObjectsCommandInput, DeleteObjectsCommandOutput,
   GetObjectCommand, GetObjectCommandInput, GetObjectCommandOutput,
-  ListObjectsCommand,
-  ListObjectsCommandInput,
-  ListObjectsCommandOutput,
+  HeadObjectCommand,
+  HeadObjectCommandInput,
+  HeadObjectCommandOutput,
   ListObjectsV2Command,
   ListObjectsV2CommandInput,
   ListObjectsV2CommandOutput,
@@ -260,6 +260,18 @@ export class S3Provider {
         reject(err);
       }
     }); 
+  }
+
+  async headObject(input: HeadObjectCommandInput): Promise<HeadObjectCommandOutput> {
+    return new Promise( async (resolve, reject) => {
+      try {
+        const command = new HeadObjectCommand(input);
+        const output = await this.client.send(command);
+        resolve(output);
+      } catch(err) {
+        reject(err);
+      }
+    });
   }
 }
 
