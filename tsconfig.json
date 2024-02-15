@@ -9,7 +9,8 @@
       "es2020",
       "dom"
     ],
+    "sourceMap": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "test"]
+  "exclude": ["node_modules", "test"],
 }
