@@ -7,7 +7,7 @@ export class FindAssetInSpread {
   private readonly _aws: AwsProvider;
   
   constructor() {
-    this._aws
+    this._aws = new AwsProvider("us-east-1", "us-east-1", "us-east-1", "us-east-1");
   }
 
   async getSpreadGuidThatContainsAssetGuid(projectGuid: string, userId: number, assetGuid: string): Promise<{SpreadGuid: string, Page: string}> {
@@ -15,9 +15,12 @@ export class FindAssetInSpread {
       try {
         let spreadGuid = "";
         const projectData = await this._getProjectData(projectGuid, userId);
+        if (!projectData) {
+          console.log("Project Not found");
+          return resolve(undefined);
+        }
         const spreadGuids = JSON.parse(projectData["Spreads"].S);
         const spreadData = await this._getSpreadData(projectGuid, spreadGuids);
-
         for (const spread of spreadData) {
           const data = JSON.parse(spread["Data"].S);
           const spreadMatch = data.Layout.ImagePlaceholders.filter( x => x.Asset !== undefined).find( x => x.Asset.Guid === assetGuid);
@@ -57,7 +60,7 @@ export class FindAssetInSpread {
     return `Page ${left}-${right}`;
   }
 
-  private async _getProjectData(projectGuid: string, userId: number): Promise<Record<string, AttributeValue>> {
+  private async _getProjectData(projectGuid: string, userId: number): Promise<Record<string, AttributeValue> | undefined> {
     return new Promise( async (resolve, reject) => {
       try {
         const output = await this._aws.DynamoDBProvider.query({

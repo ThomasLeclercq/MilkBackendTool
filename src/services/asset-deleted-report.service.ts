@@ -31,15 +31,18 @@ export class AssetDeletedReportService {
     )
   }
 
-  async collectData(lastUserId: string = undefined): Promise<void> {
+  async collectData(
+    //lastuserId: number
+    userIds: number[]
+  ): Promise<void> {
     let brokenProjects = 0;
     let browsedUsers = 0;
-    const projectList = await this._fetchEditedProjects('2023-09-19 00:00:00.000', '2023-11-16 00:00:00.000');
+    const projectList = await this._fetchEditedProjects(userIds);
     let users = Object.keys(projectList);
-    if (lastUserId) {
-      const lastIndex = users.indexOf(lastUserId);
-      users = users.slice(lastIndex, users.length-1);
-    }
+    // if (lastUserId) {
+    //   const lastIndex = users.indexOf(lastUserId);
+    //   users = users.slice(lastIndex, users.length-1);
+    // }
     console.log("Found %s Users possibly affected", users.length);
     for (const userId of users) {
       const projects = projectList[userId];
@@ -47,7 +50,7 @@ export class AssetDeletedReportService {
       for (const projectGuid of projects) {
         const assets = await this._fetchProjectAssets(projectGuid, userId);
         console.log("Project %s has %s assets", projectGuid, assets.length);
-        const missingAssets = await this._getProjectMissingAsset(assets);
+        const missingAssets = await this._getProjectMissingAsset(assets, projectGuid);
         if (missingAssets.length > 0) {
           brokenProjects += 1;
           const brokenReport = { UserId: userId, ProjectGuid: projectGuid, AssetMissingNumber: missingAssets.length, AssetMissing: missingAssets };
@@ -239,23 +242,50 @@ export class AssetDeletedReportService {
     }
   }
 
-  private async _fetchEditedProjects(startTime: string, endTime: string): Promise<{ [userId: number]: string[] }> {
-    const query = `SELECT UserId, Guid FROM Project WHERE LastSavedDateUtc >= '${startTime}' AND LastSavedDateUtc < '${endTime}' AND ApplicationId = 147298 AND IsDeleted = 0 ORDER BY LastSavedDateUtc DESC`;
-    await this._sql.connect();
-    const results = await this._sql.query(query);
-    await this._sql.disconnect();
-    const userProjects: { [userId: number]: string[] } = {};
-    for (const row of results) {
-      const userId = row["UserId"];
-      const projectGuid = row["Guid"].toLowerCase();
-      if (!userProjects[userId]) {
-        userProjects[userId] = [];
+  private async _fetchEditedProjects(userIds: number[]): Promise<{ [userId: number]: string[] }> {
+    // const query = `SELECT UserId, Guid FROM Project WHERE LastSavedDateUtc >= '${startTime}' AND LastSavedDateUtc < '${endTime}' AND ApplicationId = 147298 AND IsDeleted = 0 ORDER BY LastSavedDateUtc DESC`;
+    // await this._sql.connect();
+    // const results = await this._sql.query(query);
+    // await this._sql.disconnect();
+    // const userProjects: { [userId: number]: string[] } = {};
+    // for (const row of results) {
+    //   const userId = row["UserId"];
+    //   const projectGuid = row["Guid"].toLowerCase();
+    //   if (!userProjects[userId]) {
+    //     userProjects[userId] = [];
+    //   }
+    //   if (!userProjects[userId].includes(projectGuid)) {
+    //     userProjects[userId].push(projectGuid);
+    //   }
+    // }
+    // return userProjects;
+    return new Promise(async (resolve, reject) => {
+      try {
+        const batch: number[][] = ArrayHelper.getBatchesFromArray(userIds, 10);
+        const output = await this._aws.DynamoDBProvider.batchGetItems({
+          RequestItems: {
+            ["Project"]: { 
+              Keys: batch.map( x => ({
+                "UserId": { N: x.toString() },
+              }))
+            }
+          }
+        });
+        const userProjectMap = {};
+        output.Responses["Project"].map(x => {
+          if (!userProjectMap[x["UserId"].N]) {
+            userProjectMap[x["UserId"].N] = [];
+          }
+          const project = userProjectMap[x["UserId"].N].find(x => x === x["ProjectGuid"].S);
+          if(!project) {
+            userProjectMap[x["UserId"].N].push(x["ProjectGuid"].S);
+          }
+        })
+        resolve(userProjectMap);
+      } catch(err) {
+        reject(err);
       }
-      if (!userProjects[userId].includes(projectGuid)) {
-        userProjects[userId].push(projectGuid);
-      }
-    }
-    return userProjects;
+    });
   }
 
   private async _fetchProjectAssets(projectGuid: string, userId: string): Promise<Asset[]> {
@@ -290,26 +320,62 @@ export class AssetDeletedReportService {
     return output.Items;
   }
 
-  private async _getProjectMissingAsset(assets: Asset[]): Promise<any> {
-    return new Promise( async (resolve, reject) => {
-      let missingAssets = [];
-      async.eachLimit(assets, 100, async (asset) => {
-        try {
-          await this._aws.S3Provider.headObject({ 
-            "Bucket": "milkbooks-design",
-            "Key": `library/${asset.UserId}/${asset.Folder}/original/${asset.Guid}.${asset.OriginalFileName}`
-          })
-        } catch(err) {
-          missingAssets.push(asset);
+  // private async _getProjectMissingAsset(assets: Asset[]): Promise<any> {
+  //   return new Promise( async (resolve, reject) => {
+  //     let missingAssets = [];
+  //     async.eachLimit(assets, 100, async (asset) => {
+  //       try {
+  //         await this._aws.S3Provider.headObject({ 
+  //           "Bucket": "milkbooks-design",
+  //           "Key": `library/${asset.UserId}/${asset.Folder}/original/${asset.Guid}.${asset.OriginalFileName}`
+  //         })
+  //       } catch(err) {
+  //         missingAssets.push(asset);
+  //       }
+  //     }, err => {
+  //       if (err) {
+  //         reject(err)
+  //       } else {
+  //         resolve(missingAssets);
+  //       }
+  //     })
+  //   })
+  // }
+
+  private async _getProjectMissingAsset(assets: Asset[], projectGuid: string): Promise<Asset[]> {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        const output = await this._aws.DynamoDBProvider.query({
+          TableName: "ProjectAssetSync",
+          ExpressionAttributeValues: {
+            ":project_guid": { S: projectGuid },
+          },
+          KeyConditionExpression: "ProjectGuid = :project_guid",
+        });
+        const unRemovedAssets = output.Items.map(x => {
+          const data = JSON.parse(x["Data"].S);
+          return {
+            Guid: x["AssetGuid"].S,
+            Folder: data["Folder"],
+            OriginalFileName: data["OriginalFileName"],
+            ProjectGuid: projectGuid,
+            UserId: 0
+          }
+        });
+        const missingAssets= [];
+        for (const asset of assets) {
+          const isInSync = unRemovedAssets.find(x => x.Guid === asset.Guid);
+          if (!isInSync) {
+            missingAssets.push(asset);
+          }
         }
-      }, err => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(missingAssets);
-        }
-      })
-    })
+        resolve(assets);
+
+      } catch(err) {
+        reject(err);
+      }
+    });
   }
 
   private async _getProjectsStatus(projects: {userId: string, projectGuid: string}[]): Promise<{ ProjectGuid: string, UserId: string, ProjectStatus: string }[]> {

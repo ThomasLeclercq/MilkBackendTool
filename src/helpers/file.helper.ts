@@ -125,4 +125,69 @@ export abstract class FileHelper {
     return fs.readdirSync(path);
   }
 
+  static async searchInDirectory(value: any, targetFolder: string, verbose: boolean = false): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let hasFoundValue = false;
+        let filePaths = fs.readdirSync(`${process.cwd()}${targetFolder}`, {encoding: "utf-8"});
+        if (filePaths.length === 0) {
+          console.log("No file found in %s", targetFolder);
+          return resolve(false);
+        }
+        for(const filePath of filePaths) {
+
+          hasFoundValue = await this.searchInFile(value, `${targetFolder}${filePath}`);
+          if (hasFoundValue) {
+            if (verbose) {
+              console.log("Found in %s", filePath);
+            }
+            break;
+          }
+        }
+        resolve(hasFoundValue);
+      } catch(err) {
+        reject(err);
+      }
+    }); 
+  }
+
+  static async searchInFile(value: string, filePath: string): Promise<boolean> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        if (!fs.existsSync(`${process.cwd()}${filePath}`)) {
+          return resolve(false);
+        }
+        let hasFoundValue = false;
+        let lastChunk: string = ""; // ensure data to not be cut off between chunks
+        const stream = fs.createReadStream(`${process.cwd()}${filePath}`, {encoding: "utf-8"});
+        stream.on("error", (err) => {
+          reject(err);
+        })
+        stream.on("close", () => {
+          resolve(hasFoundValue);
+        });
+        stream.on("end", () => {
+          resolve(hasFoundValue);
+        });
+        stream.on("readable", () => {
+          let chunk: string;
+          do {
+            const chunkedData = lastChunk + chunk;
+            if (chunkedData.toLowerCase().match(value.toLowerCase()))  {
+              hasFoundValue = true;
+              stream.destroy();
+              break;
+            }
+            if (chunk) {
+              lastChunk = chunk;
+            }
+          }
+          while ((chunk = stream.read()) !== null);
+        })
+      } catch(err) {
+        reject(err);
+      }
+    });
+  }
+
 }
