@@ -17,6 +17,7 @@ export class ArchiveAssetService extends BaseDataService {
         const eventDataList = await this._listUserIdsWithPrintedProject();
         console.log("Found %s results", eventDataList.length);
         await this._publisUserIdsToAssetArchiveQueue(eventDataList);
+        resolve();
       } catch(err) {
         reject(err);
       }
@@ -28,7 +29,7 @@ export class ArchiveAssetService extends BaseDataService {
       try {
         await this._sql.connect();
         const activeProjectQuery = `
-          SELECT TOP(1) P.UserId, MAX(P.LastSavedDateUtc) AS LastSavedDateUtc
+          SELECT P.UserId, MAX(P.LastSavedDateUtc) AS LastSavedDateUtc
           FROM [${this._apiDatabase}].[dbo].[Project] as P
           INNER JOIN [${this._apiDatabase}].[dbo].[EditorProject] EP ON EP.Guid = P.Guid 
           WHERE EP.ProjectStatus = 4
@@ -37,7 +38,6 @@ export class ArchiveAssetService extends BaseDataService {
           ORDER BY LastSavedDateUtc ASC
         `;
         const result = await this._sql.query(activeProjectQuery);
-        console.log(result);
         await this._sql.disconnect();
         const users = result.map(x => ({
           UserId: x["UserId"],
