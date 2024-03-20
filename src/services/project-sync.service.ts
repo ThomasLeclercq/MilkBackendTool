@@ -140,6 +140,13 @@ export class ProjectSyncService extends BaseDataService {
     await this.insertMissingDataToSQLInBulk();
   }
 
+  public analytics(): Promise<void> {
+    const missingProjectsSTR = fs.readFileSync(`${this.directories["report"]}missing-anonymous-project-list.json`, { encoding: "utf-8" });
+    const missingProjects: SQLProject[] = JSON.parse(missingProjectsSTR);
+    console.log("Missing Projects =>  ", missingProjects.length);
+    return;
+  }
+
   public async extractProjectDataFromDynamoDB(): Promise<void> {
     return new Promise( async (resolve, reject) => {
       try {
@@ -415,6 +422,9 @@ export class ProjectSyncService extends BaseDataService {
             }
             const data: DDBData = JSON.parse(json.Item.Data.S);
             const coverData: DDBCoverData = JSON.parse(json.Item.CoverData.S)
+            if (json.Item.UserEmail == undefined || json.Item.UserEmail.S == undefined || json.Item.UserEmail.S != "") {
+              continue; // Skipping Anonymous projects
+            }
 
             const Guid = json.Item.ProjectGuid.S;
             const UserId = json.Item.UserId.N;
@@ -429,7 +439,7 @@ export class ProjectSyncService extends BaseDataService {
             const ErrorCount = json.Item.ErrorCount?.S || 'NULL';
             const CoverLayout = coverData?.Layout?.Name || 'NULL';
             const Milestone = data.Milestone || 'NULL';
-            const WasAnonymous = json.Item.UserEmail?.S ? 0 : 1;
+            const WasAnonymous = parseInt(json.Item.WasAnonymousProject?.S) || 0;
             items.push({
               Guid,
               UserId,

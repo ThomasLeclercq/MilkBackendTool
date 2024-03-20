@@ -21,6 +21,7 @@ export class RabbitMQProvider {
 
         await channel.assertQueue(queue, { durable: true });
         console.log('RabbitMQProvider.publish: queue =', queue);
+        console.log('RabbitMQProvider.publish: Publishing %s messages', messages.length);
 
         for (const message of messages) {
           const success: boolean = channel.sendToQueue(queue, Buffer.from(message), {
@@ -29,7 +30,7 @@ export class RabbitMQProvider {
           if (!success) {
             await this._waitBeforeSend(channel);
           }
-          console.log("Message Sent '%s'", message);
+          // console.log("Message Sent '%s'", message);
         }
 
         await channel.close();

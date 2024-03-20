@@ -10,7 +10,7 @@ export class FindAssetInSpread {
     this._aws = new AwsProvider("us-east-1", "us-east-1", "us-east-1", "us-east-1");
   }
 
-  async getSpreadGuidThatContainsAssetGuid(projectGuid: string, userId: number, assetGuid: string): Promise<{SpreadGuid: string, Page: string}> {
+  async getSpreadGuidThatContainsAssetGuid(projectGuid: string, userId: number, assetGuid: string): Promise<{SpreadGuid: string, Page: string, AssetGuid: string}> {
     return new Promise( async (resolve, reject) => {
       try {
         let spreadGuid = "";
@@ -29,7 +29,7 @@ export class FindAssetInSpread {
           }
         }
         const page = this.getSpreadPage(projectData, spreadGuid);
-        resolve({ SpreadGuid: spreadGuid, Page: page });
+        resolve({ SpreadGuid: spreadGuid, Page: page, AssetGuid: assetGuid });
       } catch(err) {
         reject(err);
       }

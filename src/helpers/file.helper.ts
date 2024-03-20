@@ -119,7 +119,7 @@ export abstract class FileHelper {
     return dictionary;
   }
 
-  static readDir(directories: string[] = ["data"]): string[] {
+  static readDir(directories: string[] = []): string[] {
     directories = ["data", ...directories];
     const path = `${process.cwd()}/${directories.join("/")}/`;
     return fs.readdirSync(path);
@@ -133,6 +133,9 @@ export abstract class FileHelper {
         if (filePaths.length === 0) {
           console.log("No file found in %s", targetFolder);
           return resolve(false);
+        }
+        if (verbose) {
+          console.log(`Found %s in %s`, filePaths.length, `${process.cwd()}${targetFolder}`);
         }
         for(const filePath of filePaths) {
 
