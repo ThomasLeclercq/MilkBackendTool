@@ -1,8 +1,8 @@
 import { AttributeValue } from "@aws-sdk/client-dynamodb";
 import { ListObjectsV2CommandInput } from "@aws-sdk/client-s3";
 import async from "async";
-import { ArrayHelper, FileHelper } from "../helpers";
-import { AwsProvider } from "../providers";
+import { ArrayHelper, FileHelper } from "../../helpers";
+import { AwsProvider } from "../../providers";
 
 interface Asset {
   ProjectGuid: string;

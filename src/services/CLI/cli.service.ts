@@ -1,11 +1,11 @@
 import * as dotenv from "dotenv";
 import { EventEmitter } from "events";
 import prompts from "prompts";
-import { TaskCommand } from "../models/Tasks";
-import { BaseTask } from "../tasks";
-import { RefreshPassOrderUrls } from "../tasks/RefreshPassOrderUrls";
-import { TransferUserProjectTask } from "../tasks/TransferUserProject";
-import { TransferRestoredSpreads } from "../tasks/TransferRestoredSpreads";
+import { TaskCommand } from "../../models/Tasks";
+import { BaseTask } from "../../tasks";
+import { RefreshPassOrderUrls } from "../../tasks/RefreshPassOrderUrls";
+import { TransferUserProjectTask } from "../../tasks/TransferUserProject";
+import { TransferRestoredSpreads } from "../../tasks/TransferRestoredSpreads";
 dotenv.config();
 
 export class Cli {

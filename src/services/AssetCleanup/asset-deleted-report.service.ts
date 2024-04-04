@@ -1,6 +1,6 @@
 import { AttributeValue, BatchWriteItemCommandInput } from "@aws-sdk/client-dynamodb";
-import { ArrayHelper, FileHelper } from "../helpers";
-import { AwsProvider, SqlProvider } from "../providers";
+import { ArrayHelper, FileHelper } from "../../helpers";
+import { AwsProvider, SqlProvider } from "../../providers";
 import async from "async";
 
 export interface Asset {

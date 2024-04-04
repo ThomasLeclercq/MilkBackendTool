@@ -1,6 +1,6 @@
 import { ListObjectsCommandInput, ListObjectsV2CommandInput, PutObjectCommandInput } from "@aws-sdk/client-s3";
-import { BaseDataService } from ".";
-import { DateHelper, FileHelper } from "../helpers";
+import { BaseDataService } from "..";
+import { DateHelper, FileHelper } from "../../helpers";
 
 export interface DynamoProjectAssetSyncEntry { ProjectGuid: { S: string }, AssetGuid: { S: string } };
 export interface Asset { Guid: string, Folder: string, OriginalFileName: string, ProjectGuid: string };
@@ -18,6 +18,7 @@ export class ArchiveAssetService extends BaseDataService {
       try {
         const eventDataList = await this._listUserIdsWithPrintedProject();
         console.log("Found %s results", eventDataList.length);
+        // FileHelper.storeFile(eventDataList, "new-archive.json", ["archive"])
         await this._publisUserIdsToAssetArchiveQueue(eventDataList);
         resolve();
       } catch(err) {
@@ -126,6 +127,7 @@ export class ArchiveAssetService extends BaseDataService {
           INNER JOIN [${this._apiDatabase}].[dbo].[EditorProject] EP ON EP.Guid = P.Guid 
           WHERE EP.ProjectStatus = 4
           AND P.ApplicationId = 147298
+          AND P.LastSavedDateUtc >= '2024-02-14 00:00:00.000'
           GROUP BY P.UserId
           ORDER BY LastSavedDateUtc ASC
         `;
@@ -156,7 +158,7 @@ export class ArchiveAssetService extends BaseDataService {
           }
           messages.push(JSON.stringify(msg));
         }
-        this._rmq.publish(messages, "design_studio_asset_archive")
+        await this._rmq.publish(messages, "design_studio_asset_archive")
         resolve();
       } catch(err) {
         reject(err);

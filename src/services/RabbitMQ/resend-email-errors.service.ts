@@ -1,6 +1,6 @@
-import { ArrayHelper } from "../helpers";
-import { AwsProvider } from "../providers";
-import { RabbitMQProvider } from "../providers/rmq.provider";
+import { ArrayHelper } from "../../helpers";
+import { AwsProvider } from "../../providers";
+import { RabbitMQProvider } from "../../providers/rmq.provider";
 import async from "async";
 
 export interface EmailErrorMandrill {

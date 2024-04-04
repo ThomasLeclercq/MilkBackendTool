@@ -1,7 +1,7 @@
 import { rejects } from "assert";
 import { FileHelper, PromotionHelper } from "../helpers/index";
 import { alreadyTranslated, Culture, PromotionDictionary, Region } from "../models/index";
-import { GoogleTranslationService } from "../services/google-translation.service";
+import { GoogleTranslationService } from "../services/Translations/google-translation.service";
 import { PromotionTranslationDataService } from "../services/index";
 import { BaseManager } from "./base.manager";
 

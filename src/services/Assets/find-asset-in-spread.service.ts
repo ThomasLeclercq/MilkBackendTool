@@ -1,6 +1,6 @@
 import { AttributeValue } from "@aws-sdk/client-dynamodb";
-import { ArrayHelper } from "../helpers";
-import { AwsProvider } from "../providers";
+import { ArrayHelper } from "../../helpers";
+import { AwsProvider } from "../../providers";
 
 export class FindAssetInSpread {
   
@@ -37,6 +37,9 @@ export class FindAssetInSpread {
   }
 
   getSpreadPage(projectData: Record<string, AttributeValue>, spreadGuid: string): string {
+    if (!spreadGuid) {
+      return '';
+    }
     const spreadGuids = JSON.parse(projectData["Spreads"].S);
     let index = spreadGuids.indexOf(spreadGuid);
 

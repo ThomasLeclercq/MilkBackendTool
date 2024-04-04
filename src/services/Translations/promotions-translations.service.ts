@@ -1,7 +1,7 @@
-import { FileHelper } from "../helpers/file.helper";
-import { Category, Culture, Currency, Product, Promotion, PromotionNames } from "../models/index";
-import { MilkApiProvider } from "../providers/index";
-import { BaseDataService, DataService } from "./base.data.service";
+import { FileHelper } from "../../helpers/file.helper";
+import { Category, Culture, Currency, Product, Promotion, PromotionNames } from "../../models/index";
+import { MilkApiProvider } from "../../providers/index";
+import { BaseDataService, DataService } from "../base.data.service";
 
 export class PromotionTranslationDataService extends BaseDataService implements DataService {
 

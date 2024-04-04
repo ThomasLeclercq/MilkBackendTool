@@ -3,7 +3,7 @@ dotenv.config()
 
 import { TranslationServiceClient } from '@google-cloud/translate';
 import { google } from '@google-cloud/translate/build/protos/protos';
-import { Culture, Dictionary } from '../models/Constants';
+import { Culture, Dictionary } from '../../models/Constants';
 
 export class GoogleTranslationService {
 

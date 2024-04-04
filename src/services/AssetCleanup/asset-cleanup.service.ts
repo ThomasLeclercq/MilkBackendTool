@@ -2,8 +2,8 @@ import { BatchWriteItemCommandInput, QueryCommandInput } from "@aws-sdk/client-d
 import { InvokeCommandInput } from "@aws-sdk/client-lambda";
 import { DeleteObjectsCommandInput } from "@aws-sdk/client-s3";
 import * as async from "async";
-import { BaseDataService } from ".";
-import { ArrayHelper } from "../helpers";
+import { BaseDataService } from "..";
+import { ArrayHelper } from "../../helpers";
 
 export interface DynamoProjectAssetSyncEntry { ProjectGuid: { S: string }, AssetGuid: { S: string } };
 export interface Asset { Guid: string, Folder: string, OriginalFileName: string, ProjectGuid: string };

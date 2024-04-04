@@ -1,8 +1,8 @@
 import * as async from 'async';
-import { FileHelper } from "../helpers";
-import { Currency, Product, ProductPicker } from "../models";
-import { MilkApiProvider } from '../providers/milk-api.provider';
-import { BaseDataService, DataService } from "./base.data.service";
+import { FileHelper } from "../../helpers";
+import { Currency, Product, ProductPicker } from "../../models";
+import { MilkApiProvider } from '../../providers/milk-api.provider';
+import { BaseDataService, DataService } from "../base.data.service";
 
 export class CompareRangeDataService extends BaseDataService implements DataService {
   private _products: { [key: string]: Product[] } = {};

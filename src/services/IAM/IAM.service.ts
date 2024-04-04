@@ -1,4 +1,4 @@
-import { AwsProvider } from "../providers/aws.provider";
+import { AwsProvider } from "../../providers/aws.provider";
 
 export interface IAMDocument {
   RoleName: string;

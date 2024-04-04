@@ -1,6 +1,6 @@
-import { FileHelper } from "../helpers/file.helper";
-import { ProductTypeAlias, Theme, ThemeMap, ThemeMapType } from "../models/index";
-import { BaseDataService, DataService } from "./base.data.service";
+import { FileHelper } from "../../helpers/file.helper";
+import { ProductTypeAlias, Theme, ThemeMap, ThemeMapType } from "../../models/index";
+import { BaseDataService, DataService } from "../base.data.service";
 import * as async from "async";
 
 export class ThemeDataService extends BaseDataService implements DataService {

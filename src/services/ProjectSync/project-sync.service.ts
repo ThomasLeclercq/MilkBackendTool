@@ -1,8 +1,8 @@
 import * as async from "async";
 import * as fs from "fs";
-import { BaseDataService } from ".";
-import { ArrayHelper } from "../helpers";
-import { ProgressBar } from "../utils";
+import { BaseDataService } from "..";
+import { ArrayHelper } from "../../helpers";
+import { ProgressBar } from "../../utils";
 
 interface DDBProject {
   "Item": {

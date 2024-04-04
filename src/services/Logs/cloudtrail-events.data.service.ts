@@ -1,7 +1,7 @@
-import { BaseDataService } from "./base.data.service";
+import { BaseDataService } from "../base.data.service";
 import async from "async";
-import { FileHelper } from "../helpers/file.helper";
-import { NumberHelper } from "../helpers/numbers.helper";
+import { FileHelper } from "../../helpers/file.helper";
+import { NumberHelper } from "../../helpers/numbers.helper";
 
 export class CloudtrailEventDataService extends BaseDataService {
 

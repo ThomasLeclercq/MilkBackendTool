@@ -1,5 +1,5 @@
-import { FileHelper } from "../helpers";
-import { AwsProvider, SqlProvider } from "../providers";
+import { FileHelper } from "../../helpers";
+import { AwsProvider, SqlProvider } from "../../providers";
 import async from "async";
 import fs from "fs";
 

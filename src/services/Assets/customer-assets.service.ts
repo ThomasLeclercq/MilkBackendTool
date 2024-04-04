@@ -1,6 +1,6 @@
 import async from "async";
-import { FileHelper } from "../helpers/index";
-import { AwsProvider } from "../providers/aws.provider";
+import { FileHelper } from "../../helpers/index";
+import { AwsProvider } from "../../providers/aws.provider";
 
 export class CustomerAssetService {
   constructor(private _aws: AwsProvider) {}

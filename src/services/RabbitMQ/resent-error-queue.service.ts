@@ -1,5 +1,5 @@
-import { ArrayHelper, FileHelper } from "../helpers";
-import { RabbitMQProvider } from "../providers/rmq.provider";
+import { ArrayHelper, FileHelper } from "../../helpers";
+import { RabbitMQProvider } from "../../providers/rmq.provider";
 
 export class ResentErrorQueueService {
   
@@ -38,8 +38,8 @@ export class ResentErrorQueueService {
       }
       try {
         const rmq = new RabbitMQProvider(process.env.RABBIT_MQ_SERVER);
-        const messages = await rmq.receive(this._errorQueue, 10, true);
-        FileHelper.storeFile(messages, `${this._errorQueue}-${new Date().getTime()}.json`, ["RMQ"]);
+        const messages = await rmq.receive(this._errorQueue, 100, true);
+        FileHelper.storeFile(messages, `${this._errorQueue}-${new Date().getTime()}.json`, ["RMQ", "AssetArchive"]);
         resolve();
       } catch(err) {
         reject(err);
